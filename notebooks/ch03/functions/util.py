@@ -235,7 +235,8 @@ def delete_feature_groups(fs, name):
         for fg in fs.get_feature_groups(name):
             fg.delete()
             print(f"Deleted {fg.name}/{fg.version}")
-    except hsfs.client.exceptions.RestAPIError:
+    except hsfs.client.exceptions.RestAPIError as e:
+        print(e)
         print(f"No {name} feature group found")
 
 def delete_feature_views(fs, name):
@@ -272,7 +273,7 @@ def purge_project(proj):
     delete_feature_views(fs, "air_quality_fv")
 
     # Delete ALL Feature Groups
-    delete_feature_groups(fs, "air_quality")
+    delete_feature_groups(fs, "air_quality_new")
     delete_feature_groups(fs, "weather")
     delete_feature_groups(fs, "aq_predictions")
 
@@ -299,7 +300,7 @@ def backfill_predictions_for_monitoring(weather_fg, air_quality_df, monitor_fg, 
     features_df = weather_fg.read()
     features_df = features_df.sort_values(by=['date'], ascending=True)
     features_df = features_df.tail(10)
-    features_df['predicted_pm25'] = model.predict(features_df[['temperature_2m_mean', 'precipitation_sum', 'wind_speed_10m_max', 'wind_direction_10m_dominant']])
+    features_df['predicted_pm25'] = model.predict(features_df[['temperature_2m_mean', 'precipitation_sum', 'wind_speed_10m_max', 'wind_direction_10m_dominant', 'pm25_rolling']])
     df = pd.merge(features_df, air_quality_df[['date','pm25','street','country']], on="date")
     df['days_before_forecast_day'] = 1
     hindcast_df = df
